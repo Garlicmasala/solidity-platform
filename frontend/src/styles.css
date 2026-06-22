@@ -1,0 +1,7 @@
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+.app header { display:flex; align-items:center; justify-content:space-between; padding: 12px 16px; background:#0d1117; color:#fff }
+.app nav button { margin-right:8px }
+.wallet { margin-left:16px }
+.acct { font-size:12px; background:#222; padding:6px 10px; border-radius:6px }
+main { padding:16px }
+.post { border:1px solid #eee; padding:8px; margin-bottom:8px }

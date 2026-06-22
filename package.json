@@ -1,0 +1,18 @@
+{
+  "name": "solidity-platform",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network localhost",
+    "clean": "hardhat clean"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.2",
+    "chai": "^4.3.7",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.17.0",
+    "@openzeppelin/contracts": "^4.9.3"
+  }
+}

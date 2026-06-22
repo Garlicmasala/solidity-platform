@@ -1,0 +1,150 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Test smart contracts
+  contracts:
+    runs-on: ubuntu-latest
+    name: Test Contracts
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Compile contracts
+        run: npm run compile
+      
+      - name: Run contract tests
+        run: npm test
+
+  # Build frontend
+  frontend:
+    runs-on: ubuntu-latest
+    name: Build Frontend
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install root dependencies
+        run: npm install
+      
+      - name: Install frontend dependencies
+        run: cd frontend && npm install
+      
+      - name: Build frontend
+        run: cd frontend && npm run build
+      
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend/dist
+
+  # Code quality checks
+  quality:
+    runs-on: ubuntu-latest
+    name: Code Quality
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Check Solidity syntax
+        run: npm run compile
+      
+      - name: Install frontend deps
+        run: cd frontend && npm install
+      
+      - name: Check for secrets
+        run: |
+          if grep -r "PRIVATE_KEY\|SECRET_KEY" --include="*.js" --include="*.sol" .; then
+            echo "❌ Secrets found in code!"
+            exit 1
+          fi
+          echo "✓ No secrets found"
+
+  # Generate test report
+  report:
+    runs-on: ubuntu-latest
+    name: Test Report
+    needs: contracts
+    if: always()
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run tests with detailed output
+        run: npm test -- --reporter json > test-report.json || true
+      
+      - name: Upload test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: test-report.json
+
+  # Deployment to staging (optional, remove if not needed)
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [contracts, frontend]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build frontend
+        run: cd frontend && npm install && npm run build
+      
+      - name: Deploy to staging
+        run: |
+          echo "ℹ️  Staging deployment would happen here"
+          echo "Consider using Vercel, Netlify, or similar for frontend"
+          echo "For contracts, use separate testnet RPC with private key"
+        env:
+          STAGING_RPC_URL: ${{ secrets.STAGING_RPC_URL }}
+          STAGING_DEPLOYER_KEY: ${{ secrets.STAGING_DEPLOYER_KEY }}
